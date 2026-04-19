@@ -1,59 +1,98 @@
-### README - LDAP User Authorization Service
+# python-ldap-connector
 
-This Python script provides a service for managing LDAP user authentication and data retrieval, intended for environments using LDAP for user management and authentication. The `UserLdapAuthorizationService` class allows you to connect to an LDAP server, authenticate users, and retrieve user information.
+<p>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
+  <img alt="Status" src="https://img.shields.io/badge/status-stable-green">
+</p>
 
-#### Features
+> Clase Python reutilizable para autenticar usuarios contra un servidor LDAP y consultar atributos, con paginación, filtrado por OU y logging a archivo.
 
-- **Connection Management**: Establishes and maintains a connection to an LDAP server using provided administrative credentials.
-- **User Authentication**: Authenticates users by verifying their credentials against the LDAP directory.
-- **User Data Retrieval**: Retrieves user attributes from the LDAP directory with support for pagination and filtering based on Organizational Units (OUs) to avoid.
-- **Logging**: Logs operations and errors to a file (`ldap_service.log`), including connection attempts, authentication results, and user retrieval activities.
+## Features
 
-#### Usage
+- Conexión persistente a un servidor LDAP con credenciales de admin.
+- Autenticación de usuarios verificando credenciales contra el directorio.
+- Recuperación de atributos (todos, operational, o lista explícita) con paginación y filtro por OUs a excluir.
+- Logging detallado a `ldap_service.log` — intentos de conexión, auth y lookups.
+- Configuración 100% vía `.env`, sin hardcodes.
 
-1. **Environment Variables**: Configure the following variables in a `.env` file:
-   - `LDAP_URL`: URL of the LDAP server.
-   - `LDAP_ADMIN_USERNAME`: Administrative username for initial LDAP connection.
-   - `LDAP_ADMIN_PASSWORD`: Password for the administrative user.
-   - `LDAP_SEARCH_BASES`: LDAP search bases, separated by `|`.
+## Quickstart
 
-2. **Initialize and Test**: To run the script, initialize the service with the configured parameters:
-   ```python
-   ldap_service = UserLdapAuthorizationService(
-       ldap_url=LDAP_URL,
-       ldap_admin_username=LDAP_ADMIN_USERNAME,
-       ldap_admin_password=LDAP_ADMIN_PASSWORD,
-       ldap_search_bases=LDAP_SEARCH_BASES
-   )
-   ldap_service.test_connection()
-   ```
+### Requirements
 
-3. **Authenticate Users**: Check user credentials against LDAP:
-   ```python
-   ldap_service.authenticate_user("username", "password")
-   ```
+- Python 3.9+
+- Acceso a un servidor LDAP (testeado contra OpenLDAP y Active Directory)
 
-4. **Retrieve User Data**: Fetch data for specific users:
-   ```python
-   user_data = ldap_service.get_user_data(account_name="jdoe", attributes=["sAMAccountName", "mail", "whenCreated"])
-   ```
+### Install
 
-5. **Close Connection**: Clean up by closing the LDAP connection:
-   ```python
-   ldap_service.close_connection()
-   ```
+```bash
+git clone https://github.com/GDelpo/python-ldap-connector.git
+cd python-ldap-connector
+python -m venv env
+source env/bin/activate          # Linux/macOS
+# .\env\Scripts\Activate.ps1     # Windows
+pip install -r requirements.txt
+```
 
-#### Error Handling
+### Configure
 
-The service handles various LDAP exceptions (`LDAPBindError`, `LDAPSocketOpenError`, and general `LDAPException`) and logs errors with detailed messages.
+```bash
+cp .env.example .env
+# Editar .env con las credenciales de tu servidor LDAP
+```
 
-#### Logging
+### Run
 
-Logs are stored in `ldap_service.log` and include timestamps, log levels, and messages.
+```bash
+python main.py
+```
 
-#### Requirements
+`main.py` incluye un ejemplo de uso con `test_connection()`, autenticación y `get_user_data()`.
 
-- Python 3.x
-- `ldap3` library
-- `python-dotenv` library
+## Configuration
 
+| Variable | Descripción |
+|----------|-------------|
+| `LDAP_URL` | URL del servidor LDAP (ej. `ldap://host:389`) |
+| `LDAP_ADMIN_USERNAME` | DN o username admin para el bind inicial |
+| `LDAP_ADMIN_PASSWORD` | Password del admin |
+| `LDAP_SEARCH_BASES` | Bases de búsqueda (DN); múltiples separadas por `\|` |
+
+## Usage
+
+```python
+from main import UserLdapAuthorizationService
+
+ldap = UserLdapAuthorizationService(
+    ldap_url=LDAP_URL,
+    ldap_admin_username=LDAP_ADMIN_USERNAME,
+    ldap_admin_password=LDAP_ADMIN_PASSWORD,
+    ldap_search_bases=LDAP_SEARCH_BASES,
+)
+
+ldap.test_connection()
+ldap.authenticate_user("username", "password")
+data = ldap.get_user_data(
+    account_name="jdoe",
+    attributes=["sAMAccountName", "mail", "whenCreated"],
+)
+```
+
+El archivo `example_persona_all_attrs.txt` muestra la forma típica de los atributos retornados por un AD (datos de ejemplo).
+
+## Architecture
+
+```
+python-ldap-connector/
+├── main.py                          # UserLdapAuthorizationService + demo CLI
+├── example_persona_all_attrs.txt    # Ejemplo de atributos retornados
+├── requirements.txt
+├── .env.example
+└── LICENSE
+```
+
+Librería subyacente: [`ldap3`](https://ldap3.readthedocs.io/).
+
+## License
+
+[MIT](LICENSE) © 2026 Guido Delponte
